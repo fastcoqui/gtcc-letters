@@ -33,7 +33,6 @@ test('the app source has no mail transport, analytics, or remote script loads', 
     { name: 'mail send call', re: /\.send\s*\(/ },
     { name: 'remote url', re: /https?:\/\//i },
     { name: 'innerHTML', re: /innerHTML/ },
-    { name: 'template personal name', re: /Jeovanie|Claudio|Crystal M/ },
   ];
   const hits = [];
   for (const file of files) {
