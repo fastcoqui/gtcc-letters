@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="referrer" content="no-referrer" />
+  <meta name="robots" content="noindex" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'" />
+  <title>GTCC Delinquency Letters</title>
+</head>
+<body>
+  <header class="top">
+    <div class="top-inner">
+      <p class="eyebrow">MIRC · Headquarters Detachment</p>
+      <h1>GTCC Delinquency Letters</h1>
+      <p class="tag">Drop the monthly report, check the list, download letters and email drafts.</p>
+    </div>
+  </header>
+  <p class="privacy" role="note">
+    This page runs entirely in your browser. The report is never uploaded, and this tool never sends email.
+    Drafts download as .eml files for you to review and send yourself. The SSN column is ignored. Only the last 4 of the account number are shown.
+    Names and amounts in the tracker stay in this browser’s local storage.
+  </p>
+  <nav class="tabs" aria-label="Sections">
+    <button type="button" id="tab-letters" class="tab" aria-selected="true">Letters</button>
+    <button type="button" id="tab-dashboard" class="tab" aria-selected="false">Dashboard</button>
+  </nav>
+  <main id="view-letters">
+    <section class="step" aria-labelledby="step1-title">
+      <div class="step-no">1</div>
+      <div class="step-body">
+        <h2 id="step1-title">Load the report</h2>
+        <div class="load-grid">
+          <div id="drop-report" class="drop">
+            <label class="file-btn" for="file-report">Choose report .xlsx</label>
+            <input id="file-report" type="file" accept=".xlsx,.xlsm,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" />
+            <p>Or drop the delinquency workbook here. If it includes the DTS contacts sheet, that sheet is used too.</p>
+          </div>
+          <div id="drop-contacts" class="drop quiet">
+            <label class="file-btn" for="file-contacts">Contacts file, if separate</label>
+            <input id="file-contacts" type="file" accept=".xlsx,.xlsm,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" />
+            <p>Only needed when the report workbook does not contain “Traveler and DTA Contacts”.</p>
+          </div>
+        </div>
+        <div class="date-row">
+          <label>Report as of <input id="as-of" type="date" /></label>
+          <label>Letter date <input id="letter-date" type="date" /></label>
+          <button type="button" id="load-sample" class="ghost">Load sample data</button>
+        </div>
+        <p id="file-note" class="note"></p>
+      </div>
+    </section>
+    <section class="step" aria-labelledby="step2-title">
+      <div class="step-no">2</div>
+      <div class="step-body">
+        <div class="step-head">
+          <h2 id="step2-title">Review the list</h2>
+          <div class="filters">
+            <label class="inline">Show
+              <select id="filter-status">
+                <option value="all">All</option>
+                <option value="review">Needs review</option>
+                <option value="ready">Ready</option>
+                <option value="emailed">Marked emailed</option>
+              </select>
+            </label>
+            <label class="inline">Find
+              <input id="filter-text" type="search" placeholder="Name or BDE" />
+            </label>
+          </div>
+        </div>
+        <p id="summary" class="summary">No report loaded yet.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Cardholder</th>
+                <th>BDE</th>
+                <th>Category</th>
+                <th>Amount</th>
+                <th>Acct</th>
+                <th>Rank</th>
+                <th>Email</th>
+                <th>Match</th>
+                <th>DTA</th>
+                <th>Emailed</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="review-body"></tbody>
+          </table>
+        </div>
+        <p id="empty-review" class="empty">Drop a report or load the sample to see delinquent cardholders.</p>
+      </div>
+    </section>
+    <section class="step" aria-labelledby="step3-title">
+      <div class="step-no">3</div>
+      <div class="step-body">
+        <h2 id="step3-title">Download letters and drafts</h2>
+        <p class="lead">One zip, organized by BDE. Each soldier gets a Word memorandum and an .eml draft with that memorandum attached. Open the drafts in your mail program. Nothing is sent from this page.</p>
+        <button type="button" id="generate" class="primary" disabled>Generate letters and email drafts</button>
+        <p id="gen-status" class="note" role="status"></p>
+      </div>
+    </section>
+    <details class="panel" id="settings-panel">
+      <summary>Settings — signature, POC, suspense, office symbol</summary>
+      <div class="settings-grid">
+        <label>Office symbol <input id="set-office" type="text" autocomplete="off" /></label>
+        <label>Suspense business days <input id="set-suspense" type="number" min="1" max="60" /></label>
+        <label>DTS org root <input id="set-root" type="text" autocomplete="off" /></label>
+        <label>Max DTAs named in the letter <input id="set-max-dtas" type="number" min="1" max="10" /></label>
+        <label class="wide">Letterhead
+          <textarea id="set-letterhead" rows="5"></textarea>
+        </label>
+        <label class="wide">Federal holidays (YYYY-MM-DD, one per line)
+          <textarea id="set-holidays" rows="4"></textarea>
+        </label>
+        <fieldset>
+          <legend>Agency Program Coordinator</legend>
+          <label>Name <input id="set-apc-name" type="text" autocomplete="name" /></label>
+          <label>Email <input id="set-apc-email" type="email" autocomplete="email" /></label>
+          <label>Phone <input id="set-apc-phone" type="tel" autocomplete="tel" /></label>
+        </fieldset>
+        <fieldset>
+          <legend>Point of contact</legend>
+          <label>Name, rank <input id="set-poc-name" type="text" autocomplete="name" /></label>
+          <label>Position <input id="set-poc-position" type="text" /></label>
+          <label>Phone <input id="set-poc-phone" type="tel" autocomplete="tel" /></label>
+          <label>Email <input id="set-poc-email" type="email" autocomplete="email" /></label>
+        </fieldset>
+        <fieldset>
+          <legend>Signature block</legend>
+          <label>Name <input id="set-sig-name" type="text" autocomplete="name" /></label>
+          <label>Rank, branch <input id="set-sig-rank" type="text" /></label>
+          <label>Title <input id="set-sig-title" type="text" /></label>
+          <label>Draft From address <input id="set-sender" type="email" autocomplete="email" /></label>
+        </fieldset>
+        <fieldset>
+          <legend>Draft copies</legend>
+          <label class="check"><input id="set-cc-apc" type="checkbox" /> CC the APC</label>
+          <label class="check"><input id="set-cc-dtas" type="checkbox" /> CC matched DTAs</label>
+          <label class="check"><input id="set-use-rank" type="checkbox" /> Use DTS rank when the report has none</label>
+        </fieldset>
+        <label class="wide">Unit to DTS org crosswalk (one per line: <span class="mono">Unit name = suffix</span>). The suffix is appended to the DTS root unless it already starts with the root. Leave blank if you do not have the crosswalk; DTA lookup then uses the matched contact’s org.
+          <textarea id="set-unit-map" rows="6" placeholder="259 MI BDE=259&#10;A CO 259=259301"></textarea>
+        </label>
+      </div>
+    </details>
+    <details class="panel">
+      <summary>Tracker — history on this computer</summary>
+      <p class="lead">Re-running a report with a new as-of date adds rows and marks the older ones Superseded. Export a copy so a cleared browser does not erase the history. The file contains names, emails, and amounts. It does not contain SSNs or full account numbers.</p>
+      <div class="row-actions">
+        <button type="button" id="export-xlsx" class="ghost">Export .xlsx</button>
+        <button type="button" id="export-csv" class="ghost">Export .csv</button>
+        <label class="file-btn" for="import-tracker">Import tracker</label>
+        <input id="import-tracker" type="file" accept=".xlsx,.xlsm,.xls,.csv,text/csv" />
+        <button type="button" id="clear-tracker" class="ghost danger">Clear tracker</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Cardholder</th>
+              <th>As of</th>
+              <th>Category</th>
+              <th>Amount</th>
+              <th>Letter</th>
+              <th>Emailed</th>
+              <th>Prior letters</th>
+              <th>On report</th>
+            </tr>
+          </thead>
+          <tbody id="tracker-body"></tbody>
+        </table>
+      </div>
+    </details>
+  </main>
+  <section id="view-dashboard" hidden>
+    <p id="dash-empty" class="empty">Load a report or the sample data to see the dashboard.</p>
+    <div id="dash-body" hidden>
+      <div id="kpi-row" class="kpi-row"></div>
+      <div class="chart-grid">
+        <figure>
+          <figcaption>Open balance by BDE</figcaption>
+          <div class="chart-box"><canvas id="chart-bde"></canvas></div>
+        </figure>
+        <figure>
+          <figcaption>Delinquent dollars by aging bucket</figcaption>
+          <div class="chart-box"><canvas id="chart-cat"></canvas></div>
+        </figure>
+      </div>
+      <h2 class="dash-title">BDE ranking, worst delinquent dollars to best</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>BDE</th>
+              <th>Delinquent $</th>
+              <th>Cardholders</th>
+              <th>Open balance</th>
+              <th>120+</th>
+              <th>Suspended</th>
+            </tr>
+          </thead>
+          <tbody id="rank-body"></tbody>
+        </table>
+      </div>
+      <h2 class="dash-title">Aging buckets</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Bucket</th>
+              <th>Dollars in bucket</th>
+              <th>Cardholders in category</th>
+            </tr>
+          </thead>
+          <tbody id="bucket-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+  <dialog id="preview">
+    <div class="preview-bar">
+      <h2 id="preview-title">Letter</h2>
+      <button type="button" id="preview-close" class="ghost">Close</button>
+    </div>
+    <p id="preview-mail"></p>
+    <pre id="preview-letter"></pre>
+  </dialog>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
